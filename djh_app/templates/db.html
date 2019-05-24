@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+<div class="container">
+
+
+    <h1>{{ title }} Report</h1>
+
+
+    <table border="1">
+        {% for greeting in greetings %}
+        <tr>
+            <td>{{ greeting.when }}</td>
+            <td>{{ greeting.who }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+
+{% endblock %}
