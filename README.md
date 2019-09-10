@@ -7,7 +7,13 @@
 
 ## Инструкция:
 <ol>
-<li> Клонировать текущий репозиторий
+<li> Клонировать текущий репозиторий, включая подмодули:
+<ul>
+<li> git clone https://github.com/asvbkr/djh-box.git
+<li> cd djh-box/
+<li> git submodule init
+<li> git submodule update   
+</ul> 
 <li> При отсутствии, установить в используемый интерпретатор необходимые пакеты - 
 см. requirements.txt
 <li> Установить переменную среды TT_BOT_API_TOKEN - указать токен, 
@@ -38,7 +44,13 @@ In its current form it is a fully functional bot with a minimum demo functionali
 
 ## Instruction:
 <ol>
-<li> Clone current repository
+<li> Clone current repository, including the submodules:
+<ul>
+<li> git clone https://github.com/asvbkr/djh-box.git
+<li> cd djh-box/
+<li> git submodule init
+<li> git submodule update   
+</ul>
 <li> install the required packages into the interpreter you are using - 
 see requirements.txt
 <li> Set the environment variable TT_BOT_API_TOKEN - specify the token, 
