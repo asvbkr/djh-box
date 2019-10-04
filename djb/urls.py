@@ -15,7 +15,7 @@ admin.autodiscover()
 
 urlpatterns = [
     path("", djh_app.views.index, name="index"),
-    path(djh_app.views.adr_bot, djh_app.views.run_bot, name="run_bot"),
+    path(djh_app.views.CViews.adr_bot, djh_app.views.run_bot, name="run_bot"),
     path("start_polling/", djh_app.views.start_polling, name="start_polling"),
     path("stop_polling/", djh_app.views.stop_polling, name="stop_polling"),
     path("admin/", admin.site.urls),
