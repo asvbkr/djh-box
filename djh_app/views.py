@@ -103,7 +103,7 @@ def set_subscriptions(ttb, url_list, adding=False):
 
 def get_adr_bot(ttb, adr):
     # type:(TamTamBot, str) -> str
-    # Установка секретного адреса и изменение информации о вебхуке на него
+    # Установка "секретного" адреса и изменение информации о вебхуке на него
     url = os.environ.get('WH_BASE_ADDRESS')
     if url:
         if url[-1] != '/':
@@ -118,4 +118,5 @@ def get_adr_bot(ttb, adr):
     return adr
 
 
-adr_bot = get_adr_bot(tt_bot, "bot/")
+if not hasattr(__name__, 'adr_bot'):
+    adr_bot = get_adr_bot(tt_bot, "bot/")
