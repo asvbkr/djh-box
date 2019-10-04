@@ -124,3 +124,4 @@ def get_adr_bot(ttb, adr):
 
 if not hasattr(__name__, 'adr_bot'):
     adr_bot = get_adr_bot(tt_bot, "bot/")
+    tt_bot.lgz.info(f'adr_bot = {adr_bot}')
