@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 import os
-import random
 
 from django.core.handlers.wsgi import WSGIRequest
 from django.shortcuts import render
@@ -8,9 +7,8 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from TamTamBot import TamTamBot
-from TamTamBot.TamTamBot import TamTamBotException
 from TtBot.TtBot import TtBot
-from openapi_client import UserWithPhoto, GetSubscriptionsResult, Subscription, SimpleQueryResult, SubscriptionRequestBody
+from openapi_client import UserWithPhoto
 from .models import InputMessage
 
 tt_bot = TtBot()
@@ -75,32 +73,6 @@ def stop_polling(request):
     return render(request, "index.html", context=data)
 
 
-def set_subscriptions(ttb, url_list, adding=False):
-    # type:(TamTamBot, [str], bool) -> bool
-    if not url_list:
-        return False
-    if not adding:
-        res = ttb.subscriptions.get_subscriptions()
-        if isinstance(res, GetSubscriptionsResult):
-            for subscription in res.subscriptions:
-                if isinstance(subscription, Subscription):
-                    res = ttb.subscriptions.unsubscribe(subscription.url)
-                    if isinstance(res, SimpleQueryResult) and not res.success:
-                        ttb.lgz.warning(f'Failed delete subscribe url={subscription.url}')
-                    elif isinstance(res, SimpleQueryResult) and res.success:
-                        ttb.lgz.info(f'Deleted subscribe url={subscription.url}')
-    for url in url_list:
-        wh_info = f'WebHook url={url}, version={ttb.conf.api_version}'
-        sb = SubscriptionRequestBody(url, version=ttb.conf.api_version)
-        res = ttb.subscriptions.subscribe(sb)
-        if isinstance(res, SimpleQueryResult) and not res.success:
-            raise TamTamBotException(res.message)
-        elif not isinstance(res, SimpleQueryResult):
-            raise TamTamBotException(f'Something went wrong when subscribing the WebHook {wh_info}')
-        ttb.lgz.info(f'Bot subscribed to receive updates via WebHook {wh_info}')
-    return True
-
-
 def get_adr_bot(ttb, adr):
     # type:(TamTamBot, str) -> str
     # Установка "секретного" адреса и изменение информации о вебхуке на него
@@ -109,13 +81,13 @@ def get_adr_bot(ttb, adr):
         if url[-1] != '/':
             url += '/'
         if url is not None:
-            # adr = "bot%s/" % os.environ.get('WH_SECRET', '')
-            adr = "bot%s/" % random.randint(10000, 100000)
+            adr = "bot%s/" % os.environ.get('WH_SECRET', '')
+            # adr = "bot%s/" % random.randint(10000, 100000)
             url = url + adr
             wh_info = f'WebHook url={url}, version={ttb.conf.api_version}'
             ttb.lgz.info(wh_info)
 
-            set_subscriptions(ttb, [url])
+            ttb.subscribe([url])
     return adr
 
 
