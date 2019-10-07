@@ -20,3 +20,4 @@ urlpatterns = [
     path("stop_polling/", djh_app.views.stop_polling, name="stop_polling"),
     path("admin/", admin.site.urls),
 ]
+print('************** %s' % urlpatterns)

@@ -109,8 +109,8 @@ def get_adr_bot(ttb, adr):
         if url[-1] != '/':
             url += '/'
         if url is not None:
-            adr = "bot%s/" % os.environ.get('WH_SECRET', '')
-            # adr = "bot%s/" % random.randint(10000, 100000)
+            # adr = "bot%s/" % os.environ.get('WH_SECRET', '')
+            adr = "bot%s/" % random.randint(10000, 100000)
             url = url + adr
             wh_info = f'WebHook url={url}, version={ttb.conf.api_version}'
             ttb.lgz.info(wh_info)
