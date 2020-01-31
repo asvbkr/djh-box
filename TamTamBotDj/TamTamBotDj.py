@@ -24,22 +24,30 @@ class TamTamBotDj(TamTamBot):
 
     def get_user_language_by_update(self, update):
         # type: (Update) -> str
-        language = self.get_default_language()
         update = UpdateCmn(update)
+        language = update.user_locale or self.get_default_language()
+        if language[:2] not in self.languages_dict.keys():
+            language = self.get_default_language()
         if update:
             ttb_user, created = TtbUser.update_or_create_by_update(update)
             if isinstance(ttb_user, TtbUser):
-                language = ttb_user.language or self.get_default_language()
+                language = ttb_user.language or language
         return language
 
-    def set_user_language_by_update(self, update, language):
-        # type: (Update, str) -> None
-        language = language or self.get_default_language()
+    def set_user_language_by_update(self, update, language, soft_setting=False):
+        # type: (Update, str, bool) -> None
         update = UpdateCmn(update)
+        language = language or self.get_default_language()
+        if language[:2] not in self.languages_dict.keys():
+            language = self.get_default_language()
         if update:
             ttb_user, created = TtbUser.update_or_create_by_update(update)
             if isinstance(ttb_user, TtbUser):
-                ttb_user.language = language
+                if ttb_user.language:
+                    if not soft_setting:
+                        ttb_user.language = language
+                else:
+                    ttb_user.language = language
                 ttb_user.save()
 
     def prev_step_write(self, index, update):
