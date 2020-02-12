@@ -127,4 +127,5 @@ django_heroku.settings(locals())
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'TtBot', 'locale'),
     os.path.join(BASE_DIR, 'TamTamBot', 'locale'),
+    os.path.join(BASE_DIR, 'TamTamBotDj', 'locale'),
 ]

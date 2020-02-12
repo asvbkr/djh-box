@@ -20,6 +20,18 @@ class InputMessage(models.Model):
     request_body = models.TextField('request body', null=True)
 
 
+class TtbDjSubscriber(models.Model):
+    enabled = models.BooleanField(default=False, verbose_name='enabled')
+    chat_id = models.BigIntegerField(unique=True, verbose_name='chat id')
+    chat_name = models.TextField(unique=False, verbose_name='chat name')
+    participants_count = models.BigIntegerField(unique=False, default=0, verbose_name='participants_count')
+    updated = models.DateTimeField(auto_now_add=True, verbose_name='updated')
+
+    def __str__(self):
+        # noinspection PyTypeChecker
+        return ext__str__(self)
+
+
 class TtbUser(models.Model):
     enabled = models.BooleanField(default=True, verbose_name='enabled')
     user_id = models.BigIntegerField(unique=True, verbose_name='user id')
@@ -28,6 +40,7 @@ class TtbUser(models.Model):
     language = models.CharField(max_length=10, unique=False, null=True, verbose_name='language')
     avatar_url = models.TextField(unique=False, null=True, verbose_name='avatar url')
     full_avatar_url = models.TextField(unique=False, null=True, verbose_name='full avatar url')
+    subscriber = models.ManyToManyField(TtbDjSubscriber, verbose_name='subscriber')
 
     updated = models.DateTimeField(auto_now_add=True, verbose_name='updated')
 
@@ -37,7 +50,7 @@ class TtbUser(models.Model):
 
     @classmethod
     def update_or_create_by_tt_user(cls, u, user_id=None):
-        # type: (User, int) -> (TtbUser, bool)
+        # type: (User or None, int) -> (TtbUser, bool)
         dff = {'enabled': True, 'updated': now()}
         if u:
             user_id = u.user_id
@@ -65,3 +78,27 @@ class TtbPrevStep(models.Model):
     update = models.TextField(unique=False, null=False, verbose_name='user update')
     user = models.ForeignKey(TtbUser, unique=False, on_delete=models.CASCADE, verbose_name='user')
     updated = models.DateTimeField(auto_now_add=True, null=True, verbose_name='updated')
+
+    def __str__(self):
+        # noinspection PyTypeChecker
+        return ext__str__(self)
+
+
+class TtbDjChatAvailable(models.Model):
+    """
+    Таблица кэша чатов-подписчиков subscriber, доступных для пользователя user
+    Наличие строки означает что для пользователя user в принципе доступно управление подпиской на subscriber
+    enabled в строке означает, что пользователь user отключил подписку на subscriber
+    """
+    enabled = models.BooleanField(default=False, verbose_name='enabled')
+    user = models.ForeignKey(TtbUser, unique=False, on_delete=models.CASCADE, verbose_name='user')
+    subscriber = models.ForeignKey(TtbDjSubscriber, unique=False, on_delete=models.CASCADE, verbose_name='subscriber')
+    chat = models.TextField(unique=False, null=False, verbose_name='chat')
+    permissions = models.TextField(unique=False, null=False, verbose_name='user update')
+    updated = models.DateTimeField(auto_now_add=True, verbose_name='updated')
+
+    class Meta:
+        unique_together = (('user', 'subscriber'),)
+
+    def __str__(self):
+        return ext__str__(self)
