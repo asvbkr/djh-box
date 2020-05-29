@@ -17,31 +17,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: .\TamTamBotDj.py:149
-#, python-format
-msgid ""
-"The bot %(bot_name)s cannot be added to %(chat_name)s, because it cannot "
-"work correctly under the current environment (rights, chat type, etc.)."
+#: .\TtBot.py:44
+msgid "About bot"
 msgstr ""
 
-#: .\TamTamBotDj.py:192
-#, python-format
-msgid "Current user (%s) not found."
-msgstr ""
-
-#: .\TamTamBotDj.py:321
-msgid "Cache recreated."
-msgstr ""
-
-#: .\TamTamBotDj.py:324
-#, python-format
-msgid "Error recreate cache.%s"
-msgstr ""
-
-#: .\TamTamBotDj.py:351
-msgid "Select chat to attach/detach your subscription:"
-msgstr ""
-
-#: .\TamTamBotDj.py:368
-msgid "Text response is not provided"
+#: .\TtBot.py:45
+msgid "All chat bots"
 msgstr ""
