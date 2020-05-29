@@ -155,7 +155,7 @@ class TamTamBotDj(TamTamBot):
     def change_chat_available(self, chat_ext, user):
         # type: (ChatExt, TtbUser) -> None
         user_api = User(
-            user_id=user.user_id, name=user.name, username=user.username
+            user_id=user.user_id, name=user.name, username=user.username, is_bot=user.is_bot
         )
         subscriber = self.change_subscriber(None, True, chat_ext, user_api, recreate_cache=False)
         # , 'enabled': True
@@ -226,37 +226,73 @@ class TamTamBotDj(TamTamBot):
             self.lgz.debug(f"it can't be, but it happened... user_id={user_id}")
         return chats_available
 
-    def get_buttons_for_chats_available(self, user_id, cmd):
-        # type: (int, str) -> [[CallbackButtonCmd]]
-        buttons = super(TamTamBotDj, self).get_buttons_for_chats_available(user_id, cmd)
+    # chats_available - доступные чаты — доступные для бота в разрезе пользователя.
+    # chats_attached - подключенные чаты — подмножество доступных чатов, по которым оформлена "подписка" в разрезе пользователя.
+    # что из этого использовать - решает разработчик исходя из решаемой задачи.
+    # В принципе, возможно и одновременное использование обоих словарей
+    def get_chats_available(self, user_id):
+        return self.get_users_chats_with_bot(user_id)
+
+    def get_chats_attached(self, user_id):
+        chats_dict = self.get_users_chats_with_bot(user_id)
+        res_dict = {}
+        for chat in chats_dict.values():
+            found_subscription = self.chat_is_attached(chat.chat_id, user_id)
+            if found_subscription:
+                res_dict[chat.chat_id] = chat
+        return res_dict
+
+    # Определяет является ли чат подключенным — т.е. "подписчиком" бота в разрезе пользователя
+    @staticmethod
+    def chat_is_attached(chat_id, user_id):
+        # type: (int, int) -> bool
+        found_subscription = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id, user__user_id=user_id, enabled=True).exists()
+        return found_subscription
+
+    # Определяет является ли чат доступным для подключения — т.е. для "подписки" в разрезе пользователя
+    def chat_is_attachable(self, chat_id, user_id):
+        # type: (int, int) -> bool
+        chats = self.get_users_chats_with_bot(user_id)
+        return chat_id in chats.keys()
+
+    def get_buttons_for_chats_available(self, user_id, cmd, ext_args=None):
+        # type: (int, str, dict) -> [[CallbackButtonCmd]]
+        buttons = super(TamTamBotDj, self).get_buttons_for_chats_available(user_id, cmd, ext_args)
         if buttons:
             for i in range(len(buttons)):
                 if isinstance(buttons[i][0], CallbackButtonCmd):
                     chat_id = buttons[i][0].cmd_args['chat_id']
-                    found_subscription = self.chat_is_subscriber(chat_id, user_id)
+                    found_subscription = self.chat_is_attached(chat_id, user_id)
                     buttons[i][0].intent = Intent.POSITIVE if found_subscription else Intent.DEFAULT
                     buttons[i][0].text = ((' ☑️ ' if found_subscription else ' 🔲 ') + buttons[i][0].text)[:Button.MAX_TEXT_LENGTH]
 
         return buttons
+
+    def get_buttons_for_chats_available_direct(self, user_id, cmd, ext_args):
+        # type: (int, str, dict) -> [[CallbackButtonCmd]]
+        return super(TamTamBotDj, self).get_buttons_for_chats_available(user_id, cmd, ext_args)
 
     def get_buttons_for_chats_attached(self, user_id, cmd, ext_args):
         # type: (int, str, dict) -> [[CallbackButtonCmd]]
         ext_args = ext_args or {}
 
         buttons = []
-        chats_available = self.get_users_chats_with_bot(user_id)
+        chats_dict = self.get_chats_attached(user_id)
         i = 0
-        for chat in sorted(chats_available.values()):
-            found_subscription = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat.chat_id, user__user_id=user_id, enabled=True).exists()
-            if found_subscription:
-                i += 1
-                ext_args['chat_id'] = chat.chat_id
-                buttons.append([CallbackButtonCmd('%d. %s' % (i, chat.chat_name), cmd, ext_args, Intent.POSITIVE, bot_username=self.username)])
+        for chat in sorted(chats_dict.values()):
+            i += 1
+            args = {'chat_id': chat.chat_id}
+            args.update(ext_args)
+            buttons.append([CallbackButtonCmd('%d. %s' % (i, chat.chat_name), cmd, args, Intent.POSITIVE, bot_username=self.username)])
         return buttons
 
     def view_buttons_for_chats_attached(self, title, cmd, user_id, ext_args, link=None, update=None):
         # type: (str, str, int, dict, NewMessageLink, Update) -> SendMessageResult
         return self.view_buttons(title, self.get_buttons_for_chats_attached(user_id, cmd, ext_args), user_id, link=link, update=update)
+
+    def view_buttons_for_chats_available_direct(self, title, cmd, user_id, ext_args, link=None, update=None):
+        # type: (str, str, int, dict, NewMessageLink, Update) -> SendMessageResult
+        return self.view_buttons(title, self.get_buttons_for_chats_available_direct(user_id, cmd, ext_args), user_id, link=link, update=update)
 
     # Вызов перестроения кеша
     def cmd_recreate_cache(self, update, user_id=None, dialog_only=True):
@@ -306,22 +342,9 @@ class TamTamBotDj(TamTamBot):
                         chat_id = parts[0][0]
                 if chat_id:
                     update.chat_id = chat_id
-                    self.switch_chat_available(chat_id, update.user_id, False if self.chat_is_subscriber(chat_id, update.user_id) else True)
+                    self.switch_chat_available(chat_id, update.user_id, False if self.chat_is_attached(chat_id, update.user_id) else True)
 
                 update.cmd_args = None
                 return self.cmd_handler_subscriptions_mng(update)
         else:  # Обработка текстового ответа
             self.send_message(NewMessageBody(_('Text response is not provided'), link=update.link))
-
-    # Определяет является ли чат подписчиком бота в разрезе пользователя
-    @staticmethod
-    def chat_is_subscriber(chat_id, user_id):
-        # type: (int, int) -> bool
-        found_subscription = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id, user__user_id=user_id, enabled=True).exists()
-        return found_subscription
-
-    # Определяет является ли чат доступным для подписки в разрезе пользователя
-    def chat_is_subscription(self, chat_id, user_id):
-        # type: (int, int) -> bool
-        chats = self.get_users_chats_with_bot(user_id)
-        return chat_id in chats.keys()

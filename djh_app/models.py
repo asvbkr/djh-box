@@ -40,6 +40,7 @@ class TtbUser(models.Model):
     language = models.CharField(max_length=10, unique=False, null=True, verbose_name='language')
     avatar_url = models.TextField(unique=False, null=True, verbose_name='avatar url')
     full_avatar_url = models.TextField(unique=False, null=True, verbose_name='full avatar url')
+    is_bot = models.NullBooleanField(default=None, null=True, verbose_name='is bot')
     subscriber = models.ManyToManyField(TtbDjSubscriber, verbose_name='subscriber')
 
     updated = models.DateTimeField(auto_now_add=True, verbose_name='updated')
@@ -62,6 +63,7 @@ class TtbUser(models.Model):
                 dff['avatar_url'] = u.avatar_url,
             if hasattr(u, 'full_avatar_url') and u.full_avatar_url is not None:
                 dff['full_avatar_url'] = u.full_avatar_url
+            dff['is_bot'] = u.is_bot
         if user_id is not None:
             return cls.objects.update_or_create(user_id=user_id, defaults=dff)
         else:
