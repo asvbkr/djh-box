@@ -129,14 +129,29 @@ class TamTamBotDj(TamTamBot):
         update = UpdateCmn(update)
         chat = self.chats.get_chat(update.chat_id)
         if isinstance(chat, Chat):
-            chat_ext = self.chat_is_available(chat, update.user.user_id)
-            if chat_ext:
-                return bool(self.change_subscriber(update, True))
-            res = self.chats.leave_chat(update.chat_id)
-            if isinstance(res, SimpleQueryResult) and not res.success and isinstance(update.user, User):
-                self.send_admin_message(
-                    f'Error leaving chat {chat.chat_id} ({chat.title}/{chat.link}): {res.message}\nTry adding user {update.user.user_id} - {update.user.name}(@{update.user.username})'
-                )
+            admins_chats = self.admins_contacts.get('chats') or []
+            if update.chat_id not in admins_chats:
+                chat_ext = self.chat_is_available(chat, update.user.user_id)
+                if chat_ext and self.chat_is_allowed(chat_ext, update.user.user_id):
+                    return bool(self.change_subscriber(update, True))
+                res = self.chats.leave_chat(update.chat_id)
+                if isinstance(res, SimpleQueryResult) and not res.success and isinstance(update.user, User):
+                    self.send_admin_message(
+                        f'Error leaving chat {chat.chat_id} ({chat.title}/{chat.link}): {res.message}\nTry adding user {update.user.user_id} - {update.user.name}(@{update.user.username})'
+                    )
+                elif isinstance(res, SimpleQueryResult) and res.success and isinstance(update.user, User):
+                    if not chat_ext:
+                        chat_ext = ChatExt(chat, self.title)
+                    try:
+                        # noinspection PyTypeChecker
+                        self.send_message(
+                            NewMessageBody(
+                                _('The bot %(bot_name)s cannot be added to %(chat_name)s, because it cannot work correctly under the current environment (rights, chat type, etc.).') % {
+                                    'bot_name': f'<{self.name} (@{self.username})>',
+                                    'chat_name': chat_ext.chat_name_ext, }
+                            ), user_id=update.user.user_id)
+                    except (ApiException, ValueError):
+                        pass
         return False
 
     def handle_bot_removed_from_chat_update(self, update):
@@ -332,7 +347,10 @@ class TamTamBotDj(TamTamBot):
         if not update.this_cmd_response:  # Обработка самой команды
             if not update.cmd_args:
                 return bool(
-                    self.view_buttons_for_chats_available(_('Select chat to attach/detach your subscription:'), 'subscriptions_mng', update.user_id, link=update.link, update=update.update_current)
+                    self.view_buttons_for_chats_available(
+                        _('Select chat to attach/detach your subscription:'),
+                        'subscriptions_mng', update.user_id, link=update.link,
+                        update=update.update_current)
                 )
             else:
                 chat_id = update.cmd_args.get('chat_id')

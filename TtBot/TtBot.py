@@ -4,7 +4,7 @@ import os
 from TamTamBot import CallbackButtonCmd, UpdateCmn, ChatExt
 from TamTamBot.utils.lng import get_text as _
 from TamTamBotDj.TamTamBotDj import TamTamBotDj
-from openapi_client import BotCommand, Intent, ChatType
+from openapi_client import BotCommand, Intent, ChatType, ChatAdminPermission
 
 
 class TtBot(TamTamBotDj):
@@ -27,8 +27,8 @@ class TtBot(TamTamBotDj):
             BotCommand('start', 'начать (о боте) | start (about bot)'),
             BotCommand('menu', 'показать меню | display menu'),
             BotCommand('list_all_chats', 'список всех чатов | list all chats'),
-            BotCommand('subscriptions_mng', 'управление подписками | managing subscriptions'),
             BotCommand('view_chats_available', 'доступные чаты | available chats'),
+            BotCommand('subscriptions_mng', 'управление подписками | managing subscriptions'),
             BotCommand('view_chats_attached', 'подключенные чаты | attached chats'),
 
         ]
@@ -44,12 +44,22 @@ class TtBot(TamTamBotDj):
             [CallbackButtonCmd(_('About bot'), 'start', intent=Intent.POSITIVE, bot_username=self.username)],
             [CallbackButtonCmd(_('All chat bots'), 'list_all_chats', intent=Intent.POSITIVE, bot_username=self.username)],
             [CallbackButtonCmd('Доступные чаты | Available chats', 'view_chats_available', intent=Intent.POSITIVE, bot_username=self.username)],
+            [CallbackButtonCmd('Управление подписками | Managing subscriptions', 'subscriptions_mng', intent=Intent.POSITIVE, bot_username=self.username)],
             [CallbackButtonCmd('Подключенные чаты | Attached chats', 'view_chats_attached', intent=Intent.POSITIVE, bot_username=self.username)],
         ]
         if len(self.languages_dict) > 1:
             buttons.append([CallbackButtonCmd('Изменить язык / set language', 'set_language', intent=Intent.DEFAULT, bot_username=self.username)])
 
         return buttons
+
+    # Определяет разрешённость чата
+    def chat_is_allowed(self, chat_ext, user_id=None):
+        # type: (ChatExt, int) -> bool
+        if isinstance(chat_ext, ChatExt):
+            if user_id:
+                pass
+            ap = chat_ext.admin_permissions.get(self.user_id)
+            return chat_ext.chat.type == ChatType.CHANNEL and ap and ChatAdminPermission.WRITE in ap and ChatAdminPermission.READ_ALL_MESSAGES in ap
 
     def cmd_handler_view_chats_available(self, update):
         return self.view_buttons_for_chats_available_direct('Выберите/Select:', 'view_selected_chat_info', update.user_id, {'type': 'доступный/available'}, update.link)
