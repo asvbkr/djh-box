@@ -11,7 +11,6 @@ from TamTamBot import TamTamBot
 from TamTamBot.utils.utils import get_environ_bool
 from TtBot.TtBot import TtBot
 from openapi_client import UserWithPhoto
-from .models import InputMessage
 
 tt_bot = TtBot()
 tt_bot.polling_sleep_time = 0
@@ -43,13 +42,6 @@ def run_bot(request):
     # type:(WSGIRequest) -> HttpResponse
     info = '%s-%s' % (request.method, run_bot)
     request_body = request.body
-
-    message = InputMessage()
-    # noinspection PyUnresolvedReferences
-    message.who = ('%s:\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s' %
-                   (request.method, request.headers, request.GET, request.POST, request.COOKIES, request.FILES, request.encoding, request.LANGUAGE_CODE))
-    message.request_body = request_body.decode('utf-8')
-    message.save()
 
     data = {'title': title, 'info': info}
 

@@ -13,13 +13,6 @@ def ext__str__(self):
     return s
 
 
-# Create your models here.
-class InputMessage(models.Model):
-    when = models.DateTimeField("date created", auto_now_add=True)
-    who = models.TextField("who created")
-    request_body = models.TextField('request body', null=True)
-
-
 class TtbDjSubscriber(models.Model):
     enabled = models.BooleanField(default=False, verbose_name='enabled')
     chat_id = models.BigIntegerField(unique=True, verbose_name='chat id')
