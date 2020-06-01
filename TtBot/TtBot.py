@@ -62,10 +62,10 @@ class TtBot(TamTamBotDj):
             return chat_ext.chat.type == ChatType.CHANNEL and ap and ChatAdminPermission.WRITE in ap and ChatAdminPermission.READ_ALL_MESSAGES in ap
 
     def cmd_handler_view_chats_available(self, update):
-        return self.view_buttons_for_chats_available_direct('Выберите/Select:', 'view_selected_chat_info', update.user_id, {'type': 'доступный/available'}, update.link)
+        return self.view_buttons_for_chats_available_direct('Выберите/Select:', 'view_selected_chat_info', update.user_id, {'type': 'доступный/available'}, update.link, update, True)
 
     def cmd_handler_view_chats_attached(self, update):
-        return self.view_buttons_for_chats_attached('Выберите/Select:', 'view_selected_chat_info', update.user_id, {'type': 'подключенный/attached'}, update.link)
+        return self.view_buttons_for_chats_attached('Выберите/Select:', 'view_selected_chat_info', update.user_id, {'type': 'подключенный/attached'}, update.link, update, True)
 
     def cmd_handler_view_selected_chat_info(self, update):
         # type: (UpdateCmn) -> bool
@@ -89,4 +89,6 @@ class TtBot(TamTamBotDj):
                         update,
                         f'chat_type: {chat_type}; chat_id={chat_id}; подключен/attached? {self.chat_is_attached(chat_ext.chat_id, update.user_id)}; {chat_ext.chat_name_ext}'
                     )
-        return True
+                else:
+                    return True
+        return False

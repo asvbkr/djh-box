@@ -302,13 +302,20 @@ class TamTamBotDj(TamTamBot):
             buttons.append([CallbackButtonCmd('%d. %s' % (i, chat.chat_name), cmd, args, Intent.POSITIVE, bot_username=self.username)])
         return buttons
 
-    def view_buttons_for_chats_attached(self, title, cmd, user_id, ext_args, link=None, update=None):
-        # type: (str, str, int, dict, NewMessageLink, Update) -> SendMessageResult
-        return self.view_buttons(title, self.get_buttons_for_chats_attached(user_id, cmd, ext_args), user_id, link=link, update=update)
+    def view_buttons_for_chats(self, get_buttons_for_chats_func, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
+        # type: (callable, str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
+        buttons = get_buttons_for_chats_func(user_id, cmd, ext_args)
+        if add_close_button:
+            buttons.append([CallbackButtonCmd(_('Close'), cmd, ext_args, Intent.DEFAULT, bot_username=self.username)])
+        return self.view_buttons(title, buttons, user_id, link=link, update=update)
 
-    def view_buttons_for_chats_available_direct(self, title, cmd, user_id, ext_args, link=None, update=None):
-        # type: (str, str, int, dict, NewMessageLink, Update) -> SendMessageResult
-        return self.view_buttons(title, self.get_buttons_for_chats_available_direct(user_id, cmd, ext_args), user_id, link=link, update=update)
+    def view_buttons_for_chats_attached(self, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
+        # type: (str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
+        return self.view_buttons_for_chats(self.get_buttons_for_chats_attached, title, cmd, user_id, ext_args, link=link, update=update, add_close_button=add_close_button)
+
+    def view_buttons_for_chats_available_direct(self, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
+        # type: (str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
+        return self.view_buttons_for_chats(self.get_buttons_for_chats_available_direct, title, cmd, user_id, ext_args, link=link, update=update, add_close_button=add_close_button)
 
     # Вызов перестроения кеша
     def cmd_recreate_cache(self, update, user_id=None, dialog_only=True):
