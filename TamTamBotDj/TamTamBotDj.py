@@ -30,7 +30,7 @@ class TamTamBotDj(TamTamBot):
 
     def get_user_language_by_update(self, update):
         # type: (Update) -> str
-        update = UpdateCmn(update)
+        update = UpdateCmn(update, self)
         language = update.user_locale or self.get_default_language()
         if language[:2] not in self.languages_dict.keys():
             language = self.get_default_language()
@@ -42,7 +42,7 @@ class TamTamBotDj(TamTamBot):
 
     def set_user_language_by_update(self, update, language, soft_setting=False):
         # type: (Update, str, bool) -> None
-        update = UpdateCmn(update)
+        update = UpdateCmn(update, self)
         language = language or self.get_default_language()
         if language[:2] not in self.languages_dict.keys():
             language = self.get_default_language()
@@ -60,7 +60,7 @@ class TamTamBotDj(TamTamBot):
         # type: (str, Update) -> None
         if not self.prev_step_exists(index):
             b_obj = self.serialize_update(update)
-            ttb_user, created = TtbUser.update_or_create_by_update(UpdateCmn(update))
+            ttb_user, created = TtbUser.update_or_create_by_update(UpdateCmn(update, self))
             if isinstance(ttb_user, TtbUser):
                 TtbPrevStep.objects.update_or_create(user=ttb_user, index=index, defaults={'update': b_obj, 'updated': now()})
 
@@ -83,7 +83,7 @@ class TamTamBotDj(TamTamBot):
         prev_steps = TtbPrevStep.objects.filter(index=index)
         if prev_steps.exists() and isinstance(prev_steps[0], TtbPrevStep):
             update = self.deserialize_update(prev_steps[0].update)
-            TtbUser.update_or_create_by_update(UpdateCmn(update))
+            TtbUser.update_or_create_by_update(UpdateCmn(update, self))
             return update
 
     def change_subscriber(self, update, enabled, chat_ext=None, api_user=None, recreate_cache=True):
@@ -122,11 +122,11 @@ class TamTamBotDj(TamTamBot):
 
     def handle_bot_started_update(self, update):
         # type: (BotStartedUpdate) -> bool
-        return super(TamTamBotDj, self).handle_bot_started_update(update) and self.change_subscriber(UpdateCmn(update), False)
+        return super(TamTamBotDj, self).handle_bot_started_update(update) and self.change_subscriber(UpdateCmn(update, self), False)
 
     def handle_bot_added_to_chat_update(self, update):
         # type: (BotAddedToChatUpdate) -> bool
-        update = UpdateCmn(update)
+        update = UpdateCmn(update, self)
         chat = self.chats.get_chat(update.chat_id)
         if isinstance(chat, Chat):
             admins_chats = self.admins_contacts.get('chats') or []
@@ -156,7 +156,7 @@ class TamTamBotDj(TamTamBot):
 
     def handle_bot_removed_from_chat_update(self, update):
         # type: (BotRemovedFromChatUpdate) -> bool
-        return bool(self.change_subscriber(UpdateCmn(update), False))
+        return bool(self.change_subscriber(UpdateCmn(update, self), False))
 
     @staticmethod
     def switch_chat_available(chat_id, user_id, enabled):
