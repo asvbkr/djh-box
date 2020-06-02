@@ -281,6 +281,10 @@ class TamTamBotDj(TamTamBot):
                     found_subscription = self.chat_is_attached(chat_id, user_id)
                     buttons[i][0].intent = Intent.POSITIVE if found_subscription else Intent.DEFAULT
                     buttons[i][0].text = ((' ☑️ ' if found_subscription else ' 🔲 ') + buttons[i][0].text)[:Button.MAX_TEXT_LENGTH]
+            args = {'is_close': True}
+            if ext_args:
+                args.update(ext_args)
+            buttons.append([CallbackButtonCmd(_('Close'), cmd, args, Intent.NEGATIVE, bot_username=self.username)])
 
         return buttons
 
@@ -306,7 +310,10 @@ class TamTamBotDj(TamTamBot):
         # type: (callable, str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
         buttons = get_buttons_for_chats_func(user_id, cmd, ext_args)
         if add_close_button:
-            buttons.append([CallbackButtonCmd(_('Close'), cmd, ext_args, Intent.DEFAULT, bot_username=self.username)])
+            args = {'is_close': True}
+            if ext_args:
+                args.update(ext_args)
+            buttons.append([CallbackButtonCmd(_('Close'), cmd, args, Intent.NEGATIVE, bot_username=self.username)])
         return self.view_buttons(title, buttons, user_id, link=link, update=update)
 
     def view_buttons_for_chats_attached(self, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
@@ -361,6 +368,9 @@ class TamTamBotDj(TamTamBot):
                         update=update.update_current)
                 )
             else:
+                is_close = update.cmd_args.get('is_close')
+                if is_close:
+                    return True
                 chat_id = update.cmd_args.get('chat_id')
                 if chat_id is None:
                     parts = update.cmd_args.get('c_parts') or []

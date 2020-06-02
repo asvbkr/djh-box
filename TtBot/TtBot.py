@@ -77,6 +77,9 @@ class TtBot(TamTamBotDj):
 
         if not update.this_cmd_response:  # Обрабатываем только саму команду
             if update.cmd_args:
+                is_close = update.cmd_args.get('is_close')
+                if is_close:
+                    return True
                 chat_id = update.cmd_args.get('chat_id')
                 if chat_id is None:
                     parts = update.cmd_args.get('c_parts') or []
@@ -89,6 +92,4 @@ class TtBot(TamTamBotDj):
                         update,
                         f'chat_type: {chat_type}; chat_id={chat_id}; подключен/attached? {self.chat_is_attached(chat_ext.chat_id, update.user_id)}; {chat_ext.chat_name_ext}'
                     )
-                else:
-                    return True
         return False
