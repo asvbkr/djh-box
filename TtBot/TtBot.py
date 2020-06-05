@@ -30,6 +30,7 @@ class TtBot(TamTamBotDj):
             BotCommand('view_chats_available', 'доступные чаты | available chats'),
             BotCommand('subscriptions_mng', 'управление подписками | managing subscriptions'),
             BotCommand('view_chats_attached', 'подключенные чаты | attached chats'),
+            BotCommand('view_buttons_test', 'тест кнопок | buttons test'),
 
         ]
         if len(self.languages_dict) > 1:
@@ -46,6 +47,7 @@ class TtBot(TamTamBotDj):
             [CallbackButtonCmd('Доступные чаты | Available chats', 'view_chats_available', intent=Intent.POSITIVE, bot_username=self.username)],
             [CallbackButtonCmd('Управление подписками | Managing subscriptions', 'subscriptions_mng', intent=Intent.POSITIVE, bot_username=self.username)],
             [CallbackButtonCmd('Подключенные чаты | Attached chats', 'view_chats_attached', intent=Intent.POSITIVE, bot_username=self.username)],
+            [CallbackButtonCmd('Тест кнопок | Buttons test', 'view_buttons_test', intent=Intent.POSITIVE, bot_username=self.username)],
         ]
         if len(self.languages_dict) > 1:
             buttons.append([CallbackButtonCmd('Изменить язык / set language', 'set_language', intent=Intent.DEFAULT, bot_username=self.username)])
@@ -59,7 +61,7 @@ class TtBot(TamTamBotDj):
             if user_id:
                 pass
             ap = chat_ext.admin_permissions.get(self.user_id)
-            return chat_ext.chat.type == ChatType.CHANNEL and ap and ChatAdminPermission.WRITE in ap and ChatAdminPermission.READ_ALL_MESSAGES in ap
+            return ap and ChatAdminPermission.WRITE in ap
 
     def cmd_handler_view_chats_available(self, update):
         return self.view_buttons_for_chats_available_direct('Выберите/Select:', 'view_selected_chat_info', update.user_id, {'type': 'доступный/available'}, update.link, update, True)
@@ -93,3 +95,14 @@ class TtBot(TamTamBotDj):
                         f'chat_type: {chat_type}; chat_id={chat_id}; подключен/attached? {self.chat_is_attached(chat_ext.chat_id, update.user_id)}; {chat_ext.chat_name_ext}'
                     )
         return False
+
+    def cmd_handler_view_buttons_test(self, update):
+        lt = []
+        for i in range(CallbackButtonCmd.MAX_ROWS * 20):
+            lt.append([])
+            for j in range(5):
+                s = '%0.2d_%0.2d' % (i + 1, j + 1)
+                # s = '+'
+                lt[-1].append(CallbackButtonCmd(s, s, intent=Intent.DEFAULT, bot_username=self.username))
+
+        self.view_buttons('Test', lt, user_id=update.user_id, add_close_button=True, add_info=True)

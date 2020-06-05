@@ -11,6 +11,10 @@ python ../manage.py compilemessages
 :: python ../manage.py makemessages -l ru
 :: python ../manage.py makemessages -l en
 :: python ../manage.py compilemessages
+cd ../TamTamBot
+python ../manage.py makemessages -l ru
+python ../manage.py makemessages -l en
+python ../manage.py compilemessages
 cd ../TamTamBotDj
 python ../manage.py makemessages -l ru
 python ../manage.py makemessages -l en

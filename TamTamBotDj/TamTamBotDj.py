@@ -281,10 +281,6 @@ class TamTamBotDj(TamTamBot):
                     found_subscription = self.chat_is_attached(chat_id, user_id)
                     buttons[i][0].intent = Intent.POSITIVE if found_subscription else Intent.DEFAULT
                     buttons[i][0].text = ((' ☑️ ' if found_subscription else ' 🔲 ') + buttons[i][0].text)[:Button.MAX_TEXT_LENGTH]
-            args = {'is_close': True}
-            if ext_args:
-                args.update(ext_args)
-            buttons.append([CallbackButtonCmd(_('Close'), cmd, args, Intent.NEGATIVE, bot_username=self.username)])
 
         return buttons
 
@@ -306,23 +302,17 @@ class TamTamBotDj(TamTamBot):
             buttons.append([CallbackButtonCmd('%d. %s' % (i, chat.chat_name), cmd, args, Intent.POSITIVE, bot_username=self.username)])
         return buttons
 
-    def view_buttons_for_chats(self, get_buttons_for_chats_func, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
-        # type: (callable, str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
-        buttons = get_buttons_for_chats_func(user_id, cmd, ext_args)
-        if add_close_button:
-            args = {'is_close': True}
-            if ext_args:
-                args.update(ext_args)
-            buttons.append([CallbackButtonCmd(_('Close'), cmd, args, Intent.NEGATIVE, bot_username=self.username)])
-        return self.view_buttons(title, buttons, user_id, link=link, update=update)
-
-    def view_buttons_for_chats_attached(self, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
-        # type: (str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
-        return self.view_buttons_for_chats(self.get_buttons_for_chats_attached, title, cmd, user_id, ext_args, link=link, update=update, add_close_button=add_close_button)
+    def view_buttons_for_chats_available(self, title, cmd, user_id, link=None, update=None):
+        # type: (str, str, int, NewMessageLink, Update) -> SendMessageResult
+        return self.view_buttons(title, self.get_buttons_for_chats_available(user_id, cmd), user_id, link=link, update=update, add_close_button=True)
 
     def view_buttons_for_chats_available_direct(self, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
         # type: (str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
-        return self.view_buttons_for_chats(self.get_buttons_for_chats_available_direct, title, cmd, user_id, ext_args, link=link, update=update, add_close_button=add_close_button)
+        return self.view_buttons(title, self.get_buttons_for_chats_available_direct(user_id, cmd, ext_args), user_id, link=link, update=update, add_close_button=add_close_button)
+
+    def view_buttons_for_chats_attached(self, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
+        # type: (str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
+        return self.view_buttons(title, self.get_buttons_for_chats_attached(user_id, cmd, ext_args), user_id, link=link, update=update, add_close_button=add_close_button)
 
     # Вызов перестроения кеша
     def cmd_recreate_cache(self, update, user_id=None, dialog_only=True):
@@ -333,10 +323,10 @@ class TamTamBotDj(TamTamBot):
             return False
         te = self.recreate_cache(user_id)
         if isinstance(te, timedelta):
-            msg_text = _('Cache recreated.') + ' (%s)' % te
+            msg_text = '@%s: ' % self.username + _('Cache recreated.') + ' (%s)' % te
         else:
             msg_text = ' (%s)' % te if te else ''
-            msg_text = _('Error recreate cache.%s') % msg_text
+            msg_text = '@%s: ' % _('Error recreate cache.%s') % msg_text
         return bool(
             self.msg.send_message(NewMessageBody(msg_text, link=update.link), chat_id=update.chat_id)
         )
