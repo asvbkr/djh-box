@@ -97,3 +97,13 @@ class TtbDjChatAvailable(models.Model):
 
     def __str__(self):
         return ext__str__(self)
+
+
+class TtbDjLimitedButtons(models.Model):
+    index = models.CharField(max_length=64, unique=True, null=False, verbose_name='index')
+    buttons = models.TextField(unique=False, null=False, verbose_name='user update')
+    updated = models.DateTimeField(auto_now_add=True, null=True, verbose_name='updated')
+
+    def __str__(self):
+        # noinspection PyTypeChecker
+        return ext__str__(self)

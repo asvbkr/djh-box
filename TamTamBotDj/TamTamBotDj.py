@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from TamTamBot import UpdateCmn, ChatExt, CallbackButtonCmd
 from TamTamBot.TamTamBot import TamTamBot
 from TamTamBot.utils.lng import get_text as _
-from djh_app.models import TtbUser, TtbPrevStep, TtbDjSubscriber, TtbDjChatAvailable
+from djh_app.models import TtbUser, TtbPrevStep, TtbDjSubscriber, TtbDjChatAvailable, TtbDjLimitedButtons
 from openapi_client import Update, User, Chat, SimpleQueryResult, Intent, Button, ChatType, NewMessageBody, NewMessageLink, SendMessageResult, BotStartedUpdate, BotAddedToChatUpdate, \
     BotRemovedFromChatUpdate
 from openapi_client.rest import ApiException
@@ -85,6 +85,25 @@ class TamTamBotDj(TamTamBot):
             update = self.deserialize_update(prev_steps[0].update)
             TtbUser.update_or_create_by_update(UpdateCmn(update, self))
             return update
+
+    @staticmethod
+    def limited_buttons_get(index):
+        # type: (str) -> [[]]
+        qs_buttons = TtbDjLimitedButtons.objects.filter(index=index)
+        if qs_buttons:
+            buttons_str = qs_buttons.first().buttons
+            buttons = json.loads(buttons_str)
+            return buttons
+
+    def limited_buttons_set(self, index, buttons):
+        # type: (str, [[]]) -> None
+        b_obj = self.serialize_open_api_object(buttons)
+        TtbDjLimitedButtons.objects.update_or_create(index=index, defaults={'buttons': b_obj, 'updated': now()})
+
+    @staticmethod
+    def limited_buttons_del(index):
+        # type: (str) -> None
+        TtbDjLimitedButtons.objects.filter(index=index).delete()
 
     def change_subscriber(self, update, enabled, chat_ext=None, api_user=None, recreate_cache=True):
         # type: (UpdateCmn or None, bool or None, ChatExt, User, bool) -> TtbDjSubscriber
