@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import os
+import sys
 from threading import Thread
 
 from django.core.handlers.wsgi import WSGIRequest
@@ -12,14 +13,17 @@ from TamTamBot.utils.utils import get_environ_bool
 from TtBot.TtBot import TtBot
 from openapi_client import UserWithPhoto
 
-tt_bot = TtBot()
-tt_bot.polling_sleep_time = 0
-if get_environ_bool('TT_BOT_POLLING_MODE', False):
-    t = Thread(target=tt_bot.polling, args=())
-    t.setDaemon(True)
-    t.start()
+tt_bot = None
+# noinspection SpellCheckingInspection
+if sys.argv and (sys.argv[1] == 'runserver' or sys.argv[0].endswith('gunicorn')):
+    tt_bot = TtBot()
+    tt_bot.polling_sleep_time = 0
+    if get_environ_bool('TT_BOT_POLLING_MODE', False):
+        t = Thread(target=tt_bot.polling, args=())
+        t.setDaemon(True)
+        t.start()
 
-if isinstance(tt_bot.info, UserWithPhoto):
+if tt_bot and isinstance(tt_bot.info, UserWithPhoto):
     title = 'ТТ-бот: @%s (%s)' % (tt_bot.info.username, tt_bot.info.name)
 else:
     title = 'Должна была быть инфа о ТТ-боте, но что-то пошло не так...'
@@ -75,7 +79,7 @@ def get_adr_bot(ttb, adr):
     # type:(TamTamBot, str) -> str
     # Установка "секретного" адреса и изменение информации о вебхуке на него
     url = os.environ.get('WH_BASE_ADDRESS')
-    if url:
+    if ttb and url:
         if url[-1] != '/':
             url += '/'
         if url is not None:
@@ -94,4 +98,5 @@ def get_adr_bot(ttb, adr):
 
 if not hasattr(__name__, 'adr_bot'):
     adr_bot = get_adr_bot(tt_bot, "bot/")
-    tt_bot.lgz.info(f'adr_bot = {adr_bot}')
+    if tt_bot:
+        tt_bot.lgz.info(f'adr_bot = {adr_bot}')

@@ -64,10 +64,17 @@ class TtBot(TamTamBotDj):
             return ap and ChatAdminPermission.WRITE in ap
 
     def cmd_handler_view_chats_available(self, update):
-        return self.view_buttons_for_chats_available_direct('Выберите/Select:', 'view_selected_chat_info', update.user_id, {'type': 'доступный/available'}, update.link, update, True)
+        # type: (UpdateCmn) -> bool
+        return bool(self.view_buttons_for_chats_available_direct(
+            'Выберите/Select:', 'view_selected_chat_info', update.user_id, update.chat_id, {'type': 'доступный/available'}, update.link, update.update_current, True)
+        )
 
     def cmd_handler_view_chats_attached(self, update):
-        return self.view_buttons_for_chats_attached('Выберите/Select:', 'view_selected_chat_info', update.user_id, {'type': 'подключенный/attached'}, update.link, update, True)
+        # type: (UpdateCmn) -> bool
+        return bool(
+            self.view_buttons_for_chats_attached(
+                'Выберите/Select:', 'view_selected_chat_info', update.user_id, update.chat_id, {'type': 'подключенный/attached'}, update.link, update.update_current, True)
+        )
 
     def cmd_handler_view_selected_chat_info(self, update):
         # type: (UpdateCmn) -> bool

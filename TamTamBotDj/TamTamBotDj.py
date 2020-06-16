@@ -151,7 +151,7 @@ class TamTamBotDj(TamTamBot):
             admins_chats = self.admins_contacts.get('chats') or []
             if update.chat_id not in admins_chats:
                 chat_ext = self.chat_is_available(chat, update.user.user_id)
-                if chat_ext and self.chat_is_allowed(chat_ext, update.user.user_id):
+                if chat_ext and self.chat_is_allowed_for_add(chat_ext, update.user.user_id):
                     return bool(self.change_subscriber(update, True))
                 res = self.chats.leave_chat(update.chat_id)
                 if isinstance(res, SimpleQueryResult) and not res.success and isinstance(update.user, User):
@@ -176,6 +176,11 @@ class TamTamBotDj(TamTamBot):
     def handle_bot_removed_from_chat_update(self, update):
         # type: (BotRemovedFromChatUpdate) -> bool
         return bool(self.change_subscriber(UpdateCmn(update, self), False))
+
+    # Определяет разрешённость чата для добавления бота
+    def chat_is_allowed_for_add(self, chat_ext, user_id=None):
+        # type: (ChatExt, int) -> bool
+        return self.chat_is_allowed(chat_ext, user_id)
 
     @staticmethod
     def switch_chat_available(chat_id, user_id, enabled):
@@ -321,17 +326,17 @@ class TamTamBotDj(TamTamBot):
             buttons.append([CallbackButtonCmd('%d. %s' % (i, chat.chat_name), cmd, args, Intent.POSITIVE, bot_username=self.username)])
         return buttons
 
-    def view_buttons_for_chats_available(self, title, cmd, user_id, link=None, update=None):
-        # type: (str, str, int, NewMessageLink, Update) -> SendMessageResult
-        return self.view_buttons(title, self.get_buttons_for_chats_available(user_id, cmd), user_id, link=link, update=update, add_close_button=True)
+    def view_buttons_for_chats_available(self, title, cmd, user_id, chat_id, link=None, update=None):
+        # type: (str, str, int, int, NewMessageLink, Update) -> SendMessageResult
+        return self.view_buttons(title, self.get_buttons_for_chats_available(user_id, cmd), user_id, chat_id, link=link, update=update, add_close_button=True)
 
-    def view_buttons_for_chats_available_direct(self, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
-        # type: (str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
-        return self.view_buttons(title, self.get_buttons_for_chats_available_direct(user_id, cmd, ext_args), user_id, link=link, update=update, add_close_button=add_close_button)
+    def view_buttons_for_chats_available_direct(self, title, cmd, user_id, chat_id, ext_args, link=None, update=None, add_close_button=False):
+        # type: (str, str, int, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
+        return self.view_buttons(title, self.get_buttons_for_chats_available_direct(user_id, cmd, ext_args), user_id, chat_id, link=link, update=update, add_close_button=add_close_button)
 
-    def view_buttons_for_chats_attached(self, title, cmd, user_id, ext_args, link=None, update=None, add_close_button=False):
-        # type: (str, str, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
-        return self.view_buttons(title, self.get_buttons_for_chats_attached(user_id, cmd, ext_args), user_id, link=link, update=update, add_close_button=add_close_button)
+    def view_buttons_for_chats_attached(self, title, cmd, user_id, chat_id, ext_args, link=None, update=None, add_close_button=False):
+        # type: (str, str, int, int, dict, NewMessageLink, Update, bool) -> SendMessageResult
+        return self.view_buttons(title, self.get_buttons_for_chats_attached(user_id, cmd, ext_args), user_id, chat_id, link=link, update=update, add_close_button=add_close_button)
 
     # Вызов перестроения кеша
     def cmd_recreate_cache(self, update, user_id=None, dialog_only=True):
@@ -371,10 +376,8 @@ class TamTamBotDj(TamTamBot):
         if not update.this_cmd_response:  # Обработка самой команды
             if not update.cmd_args:
                 return bool(
-                    self.view_buttons_for_chats_available(
-                        _('Select chat to attach/detach your subscription:'),
-                        'subscriptions_mng', update.user_id, link=update.link,
-                        update=update.update_current)
+                    self.view_buttons_for_chats_available(_('Select chat to attach/detach your subscription:'), 'subscriptions_mng', update.user_id, update.chat_id, link=update.link,
+                                                          update=update.update_current)
                 )
             else:
                 is_close = update.cmd_args.get('is_close')
