@@ -102,7 +102,7 @@ class TtbDjChatAvailable(TtbAbstractEn):
     user = models.ForeignKey(TtbUser, unique=False, on_delete=models.CASCADE, verbose_name='user')
     subscriber = models.ForeignKey(TtbDjSubscriber, unique=False, on_delete=models.CASCADE, verbose_name='subscriber')
     chat = models.TextField(unique=False, null=False, verbose_name='chat')
-    permissions = models.TextField(unique=False, null=False, verbose_name='user update')
+    permissions = models.TextField(unique=False, null=False, verbose_name='permissions')
 
     class Meta:
         unique_together = (('user', 'subscriber'),)

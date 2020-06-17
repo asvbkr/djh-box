@@ -1,5 +1,5 @@
 from django.contrib import admin
-from djh_app.models import TtbUser, TtbPrevStep, TtbUserProperty, TtbDjSubscriber, TtbDjSubscriberProperty
+from djh_app.models import TtbUser, TtbPrevStep, TtbUserProperty, TtbDjSubscriber, TtbDjSubscriberProperty, TtbDjChatAvailable
 
 
 # Register your models here.
@@ -61,8 +61,13 @@ class TtbPrevStepAdmin(admin.ModelAdmin):
     list_display = get_default_list_display(TtbPrevStep)
 
 
+class TtbDjChatAvailableAdmin(admin.ModelAdmin):
+    list_display = get_default_list_display(TtbDjChatAvailable)
+
+
 admin.site.register(TtbUser, TtbUserAdmin)
 admin.site.register(TtbUserProperty, TtbUserPropertyAdmin)
 admin.site.register(TtbDjSubscriber, TtbDjSubscriberAdmin)
 admin.site.register(TtbDjSubscriberProperty, TtbDjSubscriberPropertyAdmin)
 admin.site.register(TtbPrevStep, TtbPrevStepAdmin)
+admin.site.register(TtbDjChatAvailable, TtbDjChatAvailableAdmin)
