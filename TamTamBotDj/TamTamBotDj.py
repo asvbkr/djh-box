@@ -258,10 +258,9 @@ class TamTamBotDj(TamTamBot):
                 if isinstance(chat_available, TtbDjChatAvailable):
                     chat = self.deserialize_open_api_object(bytes(chat_available.chat, encoding='utf-8'), 'Chat')
                     if isinstance(chat, Chat):
-                        chat_ext = self.chat_is_available(chat, user_id)
-                        if chat_ext and self.chat_is_allowed(chat_ext, user_id):
-                            chats_available[chat.chat_id] = chat_ext
-                            self.lgz.debug('chat => chat_id=%(id)s added into list available chats from cache' % {'id': chat.chat_id})
+                        chat_ext = ChatExt(chat, self.title)
+                        chats_available[chat.chat_id] = chat_ext
+                        self.lgz.debug('chat => chat_id=%(id)s added into list available chats from cache' % {'id': chat.chat_id})
         else:
             self.lgz.debug(f"it can't be, but it happened... user_id={user_id}")
         return chats_available
