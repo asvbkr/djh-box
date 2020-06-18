@@ -286,7 +286,10 @@ class TamTamBotDj(TamTamBot):
     @staticmethod
     def chat_is_attached(chat_id, user_id):
         # type: (int, int) -> bool
-        found_subscription = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id, user__user_id=user_id, enabled=True).exists()
+        if user_id is not None:
+            found_subscription = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id, user__user_id=user_id, enabled=True).exists()
+        else:
+            found_subscription = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id, enabled=True).exists()
         return found_subscription
 
     # Определяет является ли чат доступным для подключения — т.е. для "подписки" в разрезе пользователя
