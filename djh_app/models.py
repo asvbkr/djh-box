@@ -67,8 +67,7 @@ class TtbUser(TtbAbstractEn):
         dff = {'enabled': True, 'updated': now()}
         if u:
             user_id = u.user_id
-            if u.name is not None:
-                dff['name'] = u.name
+            dff['name'] = u.name or '-'
             if u.username is not None:
                 dff['username'] = u.username
             if hasattr(u, 'avatar_url') and u.avatar_url is not None:

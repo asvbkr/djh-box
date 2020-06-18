@@ -194,7 +194,7 @@ class TamTamBotDj(TamTamBot):
     def change_chat_available(self, chat_ext, user):
         # type: (ChatExt, TtbUser) -> None
         user_api = User(
-            user_id=user.user_id, name=user.name, username=user.username, is_bot=user.is_bot
+            user_id=user.user_id, name=user.name, username=user.username, is_bot=bool(user.is_bot)
         )
         subscriber = self.change_subscriber(None, True, chat_ext, user_api, recreate_cache=False)
         # , 'enabled': True
