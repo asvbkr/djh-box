@@ -44,6 +44,14 @@ class TtbAbstractEn(TtbAbstract):
         res_str = cls.get_property_str(property_set, p_type, code)
         return str_to_int(res_str, def_val)
 
+    @classmethod
+    def set_property(cls, property_set, p_type, code, value):
+        for db_prop in property_set.filter(p_type=p_type, code=code):
+            property_set.remove(db_prop)
+        if value is not None:
+            db_prop, created = cls.objects.update_or_create(p_type=p_type, code=code, value=value)
+            property_set.add(db_prop)
+
 
 class TtbDjSubscriber(TtbAbstractEn):
     chat_id = models.BigIntegerField(unique=True, verbose_name='chat id')
