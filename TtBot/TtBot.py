@@ -99,7 +99,7 @@ class TtBot(TamTamBotDj):
                     chat_type = update.cmd_args.get('type')
                     self.send_notification(
                         update,
-                        f'chat_type: {chat_type}; chat_id={chat_id}; подключен/attached? {self.chat_is_attached(chat_ext.chat_id, update.user_id)}; {chat_ext.chat_name_ext}'
+                        f'chat_type: {chat_type}; chat_id={chat_id}; подключен/attached? {self.chat_is_attached(chat_ext.chat_id)}; {chat_ext.chat_name_ext}'
                     )
         return False
 

@@ -276,14 +276,14 @@ class TamTamBotDj(TamTamBot):
         chats_dict = self.get_users_chats_with_bot(user_id)
         res_dict = {}
         for chat in chats_dict.values():
-            found_subscription = self.chat_is_attached(chat.chat_id, user_id)
+            found_subscription = self.chat_is_attached(chat.chat_id)
             if found_subscription:
                 res_dict[chat.chat_id] = chat
         return res_dict
 
     # Определяет является ли чат подключенным — т.е. "подписчиком" бота в разрезе пользователя
     @staticmethod
-    def chat_is_attached(chat_id, user_id):
+    def chat_is_attached(chat_id, user_id=None):
         # type: (int, int or None) -> bool
         if user_id is not None:
             found_subscription = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id, user__user_id=user_id, enabled=True).exists()
@@ -304,7 +304,7 @@ class TamTamBotDj(TamTamBot):
             for i in range(len(buttons)):
                 if isinstance(buttons[i][0], CallbackButtonCmd):
                     chat_id = buttons[i][0].cmd_args['chat_id']
-                    found_subscription = self.chat_is_attached(chat_id, user_id)
+                    found_subscription = self.chat_is_attached(chat_id)
                     buttons[i][0].intent = Intent.POSITIVE if found_subscription else Intent.DEFAULT
                     buttons[i][0].text = ((' ☑️ ' if found_subscription else ' 🔲 ') + buttons[i][0].text)[:Button.MAX_TEXT_LENGTH]
 
@@ -392,7 +392,7 @@ class TamTamBotDj(TamTamBot):
                         chat_id = parts[0][0]
                 if chat_id:
                     update.chat_id = chat_id
-                    self.switch_chat_available(chat_id, update.user_id, False if self.chat_is_attached(chat_id, update.user_id) else True)
+                    self.switch_chat_available(chat_id, update.user_id, False if self.chat_is_attached(chat_id) else True)
 
                 update.cmd_args = None
                 return self.cmd_handler_subscriptions_mng(update)
