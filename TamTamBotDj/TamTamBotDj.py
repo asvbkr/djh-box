@@ -259,6 +259,7 @@ class TamTamBotDj(TamTamBot):
                     chat = self.deserialize_open_api_object(bytes(chat_available.chat, encoding='utf-8'), 'Chat')
                     if isinstance(chat, Chat):
                         chat_ext = ChatExt(chat, self.title)
+                        chat_ext.admin_permissions = json.loads(chat_available.permissions)
                         chats_available[chat.chat_id] = chat_ext
                         self.lgz.debug('chat => chat_id=%(id)s added into list available chats from cache' % {'id': chat.chat_id})
         else:
