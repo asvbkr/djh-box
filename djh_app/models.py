@@ -103,9 +103,10 @@ class TtbPrevStep(TtbAbstract):
 class TtbDjChatAvailable(TtbAbstractEn):
     """
     Таблица кэша чатов-подписчиков subscriber, доступных для пользователя user
-    Наличие строки означает что для пользователя user в принципе доступно управление подпиской на subscriber
-    enabled в строке означает, что пользователь user отключил подписку на subscriber
+    Наличие строки означает что subscriber доступен для пользователя user
+    enabled в строке управляет подключенностью subscriber - по умолчанию отключено
     """
+    enabled = models.BooleanField(default=False, verbose_name='enabled')
     user = models.ForeignKey(TtbUser, unique=False, on_delete=models.CASCADE, verbose_name='user')
     subscriber = models.ForeignKey(TtbDjSubscriber, unique=False, on_delete=models.CASCADE, verbose_name='subscriber')
     chat = models.TextField(unique=False, null=False, verbose_name='chat')
