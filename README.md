@@ -20,9 +20,9 @@
 полученный от @PrimeBot
 <li> При необходимости:
 <ul>
-<li> Установить переменную среды TRACE_REQUESTS - вывод информации о всех запросах. 
+<li> Установить переменную среды TT_BOT_TRACE_REQUESTS - вывод информации о всех запросах. 
 Возможные значения - True или False
-<li> Установить переменную среды LOGGING_LEVEL - уровень логирования. 
+<li> Установить переменную среды TT_BOT_LOGGING_LEVEL - уровень логирования. 
 Возможные значения - текстовые названия уровней из пакета logging. 
 Например, DEBUG или WARNING
 </ul>
@@ -57,9 +57,9 @@ see requirements.txt
 received from @PrimeBot
 <li> If necessary:
 <ul>
-<li> Set the environment variable TRACE_REQUESTS - display information about all queries. 
+<li> Set the environment variable TT_BOT_TRACE_REQUESTS - display information about all queries. 
 Possible values are True or False
-<li> Set environment variable LOGGING_LEVEL - logging level. 
+<li> Set environment variable TT_BOT_LOGGING_LEVEL - logging level. 
 Possible values are text level names from the logging package. 
 For example, DEBUG or WARNING
 </ul>

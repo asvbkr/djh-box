@@ -78,12 +78,12 @@ def stop_polling(request):
 def get_adr_bot(ttb, adr):
     # type:(TamTamBot, str) -> str
     # Установка "секретного" адреса и изменение информации о вебхуке на него
-    url = os.environ.get('WH_BASE_ADDRESS')
+    url = os.environ.get('TT_BOT_WH_BASE_ADDRESS')
     if ttb and url:
         if url[-1] != '/':
             url += '/'
         if url is not None:
-            adr = "bot%s/" % os.environ.get('WH_SECRET', '')
+            adr = "bot%s/" % os.environ.get('TT_BOT_WH_SECRET', '')
             # adr = "bot%s/" % random.randint(10000, 100000)
             url = url + adr
             wh_info = f'WebHook url={url}, version={ttb.conf.api_version}'
