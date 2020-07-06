@@ -183,13 +183,14 @@ class TamTamBotDj(TamTamBot):
         return self.chat_is_allowed(chat_ext, user_id)
 
     @staticmethod
-    def switch_chat_available(chat_id, user_id, enabled):
-        # type: (int, int, bool) -> None
+    def switch_chat_available(enabled, chat_id, user_id=None):
+        # type: (bool, int, int) -> None
         # , 'enabled': True
-        chat_available = TtbDjChatAvailable.objects.get(subscriber__chat_id=chat_id, user__user_id=user_id)
-        chat_available.enabled = enabled
-        chat_available.updated = now()
-        chat_available.save()
+        if user_id:
+            qs = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id, user__user_id=user_id)
+        else:
+            qs = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id)
+        qs.update(enabled=enabled, updated=now())
 
     def change_chat_available(self, chat_ext, user):
         # type: (ChatExt, TtbUser) -> None
@@ -393,7 +394,7 @@ class TamTamBotDj(TamTamBot):
                         chat_id = parts[0][0]
                 if chat_id:
                     update.chat_id = chat_id
-                    self.switch_chat_available(chat_id, update.user_id, False if self.chat_is_attached(chat_id) else True)
+                    self.switch_chat_available(False if self.chat_is_attached(chat_id) else True, chat_id)
 
                 update.cmd_args = None
                 return self.cmd_handler_subscriptions_mng(update)
