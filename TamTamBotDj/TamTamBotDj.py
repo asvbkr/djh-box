@@ -123,6 +123,7 @@ class TamTamBotDj(TamTamBot):
 
         if chat_ext:
             defaults['chat_name'] = chat_ext.chat_name
+            defaults['chat_type'] = chat_ext.chat.type
             defaults['participants_count'] = chat_ext.chat.participants_count
             subscriber, created = TtbDjSubscriber.objects.update_or_create(chat_id=chat_ext.chat_id, defaults=defaults)
         if api_user:

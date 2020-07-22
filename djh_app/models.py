@@ -5,7 +5,7 @@ from django.utils.timezone import now
 
 from TamTamBot import UpdateCmn
 from TamTamBot.utils.utils import str_to_int
-from openapi_client import User
+from openapi_client import User, ChatType
 
 
 class TtbAbstract(models.Model):
@@ -56,6 +56,7 @@ class TtbAbstractEn(TtbAbstract):
 class TtbDjSubscriber(TtbAbstractEn):
     chat_id = models.BigIntegerField(unique=True, verbose_name='chat id')
     chat_name = models.TextField(unique=False, verbose_name='chat name')
+    chat_type = models.CharField(max_length=10, unique=False, default=ChatType.CHAT, verbose_name='chat_type')
     participants_count = models.BigIntegerField(unique=False, default=0, verbose_name='participants_count')
 
 
