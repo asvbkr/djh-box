@@ -58,6 +58,7 @@ class TtbDjSubscriber(TtbAbstractEn):
     chat_name = models.TextField(unique=False, verbose_name='chat name')
     chat_type = models.CharField(max_length=10, unique=False, default=ChatType.CHAT, verbose_name='chat_type')
     participants_count = models.BigIntegerField(unique=False, default=0, verbose_name='participants_count')
+    language = models.CharField(max_length=20, unique=False, null=True, verbose_name='language')
 
 
 class TtbUser(TtbAbstractEn):

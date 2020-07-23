@@ -126,6 +126,10 @@ class TamTamBotDj(TamTamBot):
             defaults['chat_type'] = chat_ext.chat.type
             defaults['participants_count'] = chat_ext.chat.participants_count
             subscriber, created = TtbDjSubscriber.objects.update_or_create(chat_id=chat_ext.chat_id, defaults=defaults)
+            if subscriber.language is None:
+                subscriber.language = chat_ext.lang
+                subscriber.save()
+
         if api_user:
             user, created = TtbUser.update_or_create_by_tt_user(api_user)
             if user:
@@ -139,6 +143,12 @@ class TamTamBotDj(TamTamBot):
                 self.recreate_cache(api_user.user_id)
 
         return subscriber
+
+    def process_command(self, update):
+        # type: (Update) -> bool
+        uc = UpdateCmn(update, self)
+        self.change_subscriber(uc, True, api_user=uc.user, recreate_cache=False)
+        return super(TamTamBotDj, self).process_command(update)
 
     def handle_message_created_update(self, update):
         # type: (MessageCreatedUpdate) -> bool
