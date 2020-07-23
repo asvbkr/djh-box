@@ -23,6 +23,8 @@ class TtbDjSubscriberPropertyInline(admin.TabularInline):
 class TtbDjSubscriberAdmin(admin.ModelAdmin):
     list_display = get_default_list_display(TtbDjSubscriber)
     inlines = [TtbDjSubscriberPropertyInline]
+    search_fields = ['chat_name']
+    list_filter = ['chat_type', 'language', 'created', 'updated']
 
 
 class TtbUserPropertyInline(admin.TabularInline):
