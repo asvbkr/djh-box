@@ -115,11 +115,11 @@ class TamTamBotDj(TamTamBot):
             defaults['enabled'] = enabled
         if update:
             try:
-                chat_ext = ChatExt(self.chats.get_chat(update.chat_id), self.title)
+                chat_ext = chat_ext or ChatExt(self.chats.get_chat(update.chat_id), self.title)
             except ApiException:
                 chat_ext = None
 
-            api_user = update.user
+            api_user = api_user or update.user
 
         if chat_ext:
             defaults['chat_name'] = chat_ext.chat_name
@@ -146,20 +146,17 @@ class TamTamBotDj(TamTamBot):
 
     def process_command(self, update):
         # type: (Update) -> bool
-        uc = UpdateCmn(update, self)
-        self.change_subscriber(uc, True, api_user=uc.user, recreate_cache=False)
+        self.change_subscriber(UpdateCmn(update, self), True, recreate_cache=False)
         return super(TamTamBotDj, self).process_command(update)
 
     def handle_message_created_update(self, update):
         # type: (MessageCreatedUpdate) -> bool
-        uc = UpdateCmn(update, self)
-        self.change_subscriber(uc, True, api_user=uc.user, recreate_cache=False)
+        self.change_subscriber(UpdateCmn(update, self), True, recreate_cache=False)
         return super(TamTamBotDj, self).handle_message_created_update(update)
 
     def handle_message_callback_update(self, update):
         # type: (MessageCallbackUpdate) -> bool
-        uc = UpdateCmn(update, self)
-        self.change_subscriber(uc, True, api_user=uc.user, recreate_cache=False)
+        self.change_subscriber(UpdateCmn(update, self), True, recreate_cache=False)
         return super(TamTamBotDj, self).handle_message_callback_update(update)
 
     def handle_bot_started_update(self, update):
@@ -202,26 +199,22 @@ class TamTamBotDj(TamTamBot):
 
     def handle_user_added_to_chat_update(self, update):
         # type: (UserAddedToChatUpdate) -> bool
-        uc = UpdateCmn(update, self)
-        self.change_subscriber(uc, True, api_user=uc.user, recreate_cache=False)
+        self.change_subscriber(UpdateCmn(update, self), True, recreate_cache=False)
         return super(TamTamBotDj, self).handle_user_added_to_chat_update(update)
 
     def handle_user_removed_from_chat_update(self, update):
         # type: (UserRemovedFromChatUpdate) -> bool
-        uc = UpdateCmn(update, self)
-        self.change_subscriber(uc, True, api_user=uc.user, recreate_cache=False)
+        self.change_subscriber(UpdateCmn(update, self), True, recreate_cache=False)
         return super(TamTamBotDj, self).handle_user_removed_from_chat_update(update)
 
     def handle_chat_title_changed_update(self, update):
         # type: (ChatTitleChangedUpdate) -> bool
-        uc = UpdateCmn(update, self)
-        self.change_subscriber(uc, True, api_user=uc.user, recreate_cache=False)
+        self.change_subscriber(UpdateCmn(update, self), True, recreate_cache=False)
         return super(TamTamBotDj, self).handle_chat_title_changed_update(update)
 
     def handle_message_chat_created_update(self, update):
         # type: (MessageChatCreatedUpdate) -> bool
-        uc = UpdateCmn(update, self)
-        self.change_subscriber(uc, True, api_user=uc.user, recreate_cache=False)
+        self.change_subscriber(UpdateCmn(update, self), True, recreate_cache=False)
         return super(TamTamBotDj, self).handle_message_chat_created_update(update)
 
     # Определяет разрешённость чата для добавления бота
