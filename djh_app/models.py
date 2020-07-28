@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from TamTamBot import UpdateCmn
-from TamTamBot.utils.utils import str_to_int
+from TamTamBot.utils.utils import str_to_int, datetime_from_unix_time
 from openapi_client import User, ChatType
 
 
@@ -71,22 +71,46 @@ class TtbUser(TtbAbstractEn):
     is_bot = models.NullBooleanField(default=None, null=True, verbose_name='is bot')
     subscriber = models.ManyToManyField(TtbDjSubscriber, verbose_name='subscriber')
 
+    @staticmethod
+    def need_disable_user_by_last_activity_days(user, days=120):
+        # type: (User, int) -> bool
+        disable_user = False
+        nt = now()
+        ut = user.last_activity_time
+        if ut:
+            ut = datetime_from_unix_time(ut).astimezone()
+            if ((nt - ut).total_seconds() > 60 * 60 * 24 * days) or user.name == 'DELETED USER':
+                disable_user = True
+        else:
+            disable_user = True
+        return disable_user
+
     @classmethod
-    def update_or_create_by_tt_user(cls, u, user_id=None):
+    def update_or_create_by_tt_user(cls, user, user_id=None):
         # type: (User or None, int) -> (TtbUser, bool)
-        dff = {'enabled': True, 'updated': now()}
-        if u:
-            user_id = u.user_id
-            dff['name'] = u.name or '-'
-            if u.username is not None:
-                dff['username'] = u.username
-            if hasattr(u, 'avatar_url') and u.avatar_url is not None:
-                dff['avatar_url'] = u.avatar_url,
-            if hasattr(u, 'full_avatar_url') and u.full_avatar_url is not None:
-                dff['full_avatar_url'] = u.full_avatar_url
-            dff['is_bot'] = u.is_bot
+        defaults = {'updated': now()}
+        if user:
+            user_id = user.user_id
+            defaults['name'] = user.name or '-'
+            if user.username is not None:
+                defaults['username'] = user.username
+            if hasattr(user, 'avatar_url') and user.avatar_url is not None:
+                defaults['avatar_url'] = user.avatar_url,
+            if hasattr(user, 'full_avatar_url') and user.full_avatar_url is not None:
+                defaults['full_avatar_url'] = user.full_avatar_url
+            defaults['is_bot'] = user.is_bot
+
+            disable_user = user.disable if hasattr(user, 'disable') else False
+            if not disable_user:
+                disable_user = cls.need_disable_user_by_last_activity_days(user)
+
+            if disable_user:
+                defaults['enabled'] = False
+            else:
+                defaults['enabled'] = True
+
         if user_id is not None:
-            return cls.objects.update_or_create(user_id=user_id, defaults=dff)
+            return cls.objects.update_or_create(user_id=user_id, defaults=defaults)
         else:
             return None, False
 

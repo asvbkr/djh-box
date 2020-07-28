@@ -9,7 +9,7 @@ from TamTamBot.TamTamBot import TamTamBot
 from TamTamBot.utils.lng import get_text as _
 from djh_app.models import TtbUser, TtbPrevStep, TtbDjSubscriber, TtbDjChatAvailable, TtbDjLimitedButtons
 from openapi_client import Update, User, Chat, SimpleQueryResult, Intent, Button, ChatType, NewMessageBody, NewMessageLink, SendMessageResult, BotStartedUpdate, BotAddedToChatUpdate, \
-    BotRemovedFromChatUpdate, MessageCreatedUpdate, MessageCallbackUpdate, UserAddedToChatUpdate, UserRemovedFromChatUpdate, ChatTitleChangedUpdate, MessageChatCreatedUpdate
+    BotRemovedFromChatUpdate, MessageCreatedUpdate, MessageCallbackUpdate, UserAddedToChatUpdate, UserRemovedFromChatUpdate, ChatTitleChangedUpdate, MessageChatCreatedUpdate, ChatMember
 from openapi_client.rest import ApiException
 
 
@@ -114,31 +114,44 @@ class TamTamBotDj(TamTamBot):
         if enabled is not None:
             defaults['enabled'] = enabled
         if update:
+            if not api_user:
+                api_user = update.user
+                if api_user and not hasattr(api_user, 'disable'):
+                    api_user.disable = True
             try:
-                chat_ext = chat_ext or ChatExt(self.chats.get_chat(update.chat_id), self.title)
+                chat_ext = chat_ext or ChatExt(self.chats.get_chat(update.chat_id), self.get_dialog_name(self.title, user=api_user))
             except ApiException:
                 chat_ext = None
-
-            api_user = api_user or update.user
 
         if chat_ext:
             defaults['chat_name'] = chat_ext.chat_name
             defaults['chat_type'] = chat_ext.chat.type
             defaults['participants_count'] = chat_ext.chat.participants_count
             subscriber, created = TtbDjSubscriber.objects.update_or_create(chat_id=chat_ext.chat_id, defaults=defaults)
-            if subscriber.language is None:
-                subscriber.language = chat_ext.lang
-                subscriber.save()
 
+        db_user = None
         if api_user:
-            user, created = TtbUser.update_or_create_by_tt_user(api_user)
-            if user:
+            if api_user.is_bot:
+                api_user.disable = True
+            db_user, created = TtbUser.update_or_create_by_tt_user(api_user)
+            api_user.disable = not db_user.enabled
+            if db_user:
                 if subscriber:
-                    user.subscriber.add(subscriber)
+                    db_user.subscriber.add(subscriber)
                 else:
                     subscriber, created = TtbDjSubscriber.objects.update_or_create(chat_id=update.chat_id, defaults=defaults)
-                    user.subscriber.remove(subscriber)
+                    db_user.subscriber.remove(subscriber)
 
+        if isinstance(subscriber, TtbDjSubscriber) and chat_ext:
+            if subscriber.language is None:
+                if chat_ext.lang:
+                    subscriber.language = chat_ext.lang
+                    subscriber.save()
+                elif isinstance(db_user, TtbUser) and db_user.language:
+                    subscriber.language = db_user.language
+                    subscriber.save()
+
+        if api_user:
             if recreate_cache and api_user.user_id:
                 self.recreate_cache(api_user.user_id)
 
@@ -146,7 +159,9 @@ class TamTamBotDj(TamTamBot):
 
     def process_command(self, update):
         # type: (Update) -> bool
-        self.change_subscriber(UpdateCmn(update, self), True, recreate_cache=False)
+        uc = UpdateCmn(update, self)
+        uc.user.disable = False
+        self.change_subscriber(uc, True, recreate_cache=False)
         return super(TamTamBotDj, self).process_command(update)
 
     def handle_message_created_update(self, update):
@@ -232,15 +247,23 @@ class TamTamBotDj(TamTamBot):
             qs = TtbDjChatAvailable.objects.filter(subscriber__chat_id=chat_id)
         qs.update(enabled=enabled, updated=now())
 
-    def change_chat_available(self, chat_ext, user):
-        # type: (ChatExt, TtbUser) -> None
-        user_api = User(
-            user_id=user.user_id, name=user.name or '-', username=user.username, is_bot=bool(user.is_bot), last_activity_time=0
-        )
-        subscriber = self.change_subscriber(None, True, chat_ext, user_api, recreate_cache=False)
-        # , 'enabled': True
+    def change_chat_available(self, chat_ext, db_user, api_user=None):
+        # type: (ChatExt, TtbUser, User) -> None
+        try:
+            api_user = api_user or self.get_chat_admins(chat_ext.chat_id).get(db_user.user_id) if chat_ext.chat.type != ChatType.DIALOG else self.chats.get_chat(chat_ext.chat_id).dialog_with_user
+        except ApiException:
+            api_user = User(
+                user_id=db_user.user_id, name=db_user.name or '-', username=db_user.username, is_bot=bool(db_user.is_bot), last_activity_time=0,
+            )
+            api_user.disable = True
+
+        subscriber = self.change_subscriber(None, True, chat_ext, api_user, recreate_cache=False)
+
+        if api_user.disable:
+            TtbDjChatAvailable.objects.filter(user=db_user, subscriber=subscriber, ).delete()
+            return
         TtbDjChatAvailable.objects.update_or_create(
-            user=user, subscriber=subscriber,
+            user=db_user, subscriber=subscriber,
             defaults={'chat': self.serialize_open_api_object(chat_ext.chat), 'permissions': json.dumps(chat_ext.admin_permissions), 'updated': now()}
         )
 
@@ -248,42 +271,74 @@ class TamTamBotDj(TamTamBot):
         # type: (int) -> timedelta or str
         tb = now()
 
-        all_chats = self.get_all_chats_with_bot_admin()
+        all_bot_relation = self.get_all_chats_with_bot_admin()
+        all_chats_members = all_bot_relation['ChatsMembers']
+        all_members = all_bot_relation['Members']
+        all_chats = all_bot_relation['Chats']
+
+        proc_user_list = list(all_members.keys())
+        proc_chat_list = list(all_chats.keys())
 
         if user_id:
-            ds_user = TtbUser.objects.filter(user_id=user_id)
-            ds_user.update(enabled=True, updated=now())
-            if len(ds_user) == 0:
+            if user_id not in proc_user_list:
                 return _('Current user (%s) not found.') % user_id
+            api_user = proc_user_list[user_id]
+            TtbUser.update_or_create_by_tt_user(api_user)
+            qs_db_user = TtbUser.objects.filter(user_id=user_id)
         else:
-            ds_user = TtbUser.objects.filter(enabled=True)
+            # Синхронизация пользователей
+            proc_user_list = []
+            c_u = 0
+            for api_user in all_members.values():
+                if isinstance(api_user, ChatMember): pass
+                c_u += 1
+                if api_user.is_bot:
+                    api_user.disable = True
+                db_user, created = TtbUser.update_or_create_by_tt_user(api_user)
+                u_i = f'{"bot " if api_user.is_bot else ""}name={api_user.name}; user_id={api_user.user_id}; enabled={db_user.enabled}'
+                if api_user.username:
+                    u_i += f'; username={api_user.username}'
+                # if api_user.description:
+                #     u_i += f' ({api_user.description[:50]})'
+                self.lgz.debug(f'User synchronization +++++++++++++++> ({c_u} of {len(all_members)}) - {u_i}')
+                proc_user_list.append(api_user.user_id)
 
-        cnt_u = len(ds_user)
+            duc = TtbUser.objects.filter(enabled=True).exclude(user_id__in=proc_user_list).update(enabled=False, updated=now())
+            self.lgz.debug(f'Other users disabled: {duc}')
 
-        # Удаление строк кэша по неактивным подписчикам
+            dcc = TtbDjSubscriber.objects.filter(enabled=True).exclude(chat_id__in=proc_chat_list).update(enabled=False, updated=now())
+            self.lgz.debug(f'Other chats disabled: {dcc}')
+
+            qs_db_user = TtbUser.objects.filter(enabled=True)
+
+        cnt_u = len(qs_db_user)
+
+        # Удаление строк кэша по неактивным подписчикам и пользователям
         if user_id:
             TtbDjChatAvailable.objects.filter(user__user_id=user_id, subscriber__enabled=False).delete()
         else:
             TtbDjChatAvailable.objects.filter(subscriber__enabled=False).delete()
+            TtbDjChatAvailable.objects.filter(user__enabled=False).delete()
 
         c_u = 0
-        for user in ds_user:
+        for db_user in qs_db_user:
             c_u += 1
-            self.lgz.debug(f'+++++++++++++++> ({c_u} of {len(ds_user)}) - {user}')
-            chats = all_chats.get(user.user_id)  # super(TamTamBotDj, self).get_users_chats_with_bot(user.user_id)
-            if chats:
+            self.lgz.debug(f'+++++++++++++++> ({c_u} of {len(qs_db_user)}) - {db_user}')
+            chats = all_chats_members.get(db_user.user_id)
+            api_user = all_members.get(db_user.user_id)
+            if chats and api_user:
                 cnt_c = len(chats)
                 c_c = 0
                 for chat in chats.values():
                     c_c += 1
                     self.lgz.debug('Executing %.4f%% (user %d of %d) -> %.4f%% (chat %d of %d)' % (c_u / cnt_u * 100, c_u, cnt_u, c_c / cnt_c * 100, c_c, cnt_c))
-                    self.change_chat_available(chat, user)
-                self.lgz.debug(f"delete other records if exists for user_id={user.user_id}")
-                TtbDjChatAvailable.objects.filter(user=user).exclude(subscriber__chat_id__in=chats.keys()).delete()
-            else:
-                self.lgz.debug(f"do not available chats for user_id={user.user_id}")
-                TtbDjChatAvailable.objects.filter(user=user).delete()
-                TtbUser.objects.filter(enabled=True, user_id=user.user_id).update(enabled=False, updated=now())
+                    self.change_chat_available(chat, db_user, api_user)
+                self.lgz.debug(f"delete other records if exists for user_id={db_user.user_id}")
+                TtbDjChatAvailable.objects.filter(user=db_user).exclude(subscriber__chat_id__in=chats.keys()).delete()
+            elif not chats:
+                self.lgz.debug(f"do not available chats for user_id={db_user.user_id}")
+                TtbDjChatAvailable.objects.filter(user=db_user).delete()
+                TtbUser.objects.filter(enabled=True, user_id=db_user.user_id).update(enabled=False, updated=now())
         e_t = now() - tb
         self.lgz.debug(f'100% executed in {e_t}')
         return e_t
@@ -299,8 +354,7 @@ class TamTamBotDj(TamTamBot):
                 if isinstance(chat_available, TtbDjChatAvailable):
                     chat = self.deserialize_open_api_object(bytes(chat_available.chat, encoding='utf-8'), 'Chat')
                     if isinstance(chat, Chat):
-                        chat_ext = ChatExt(chat, self.title)
-                        chat_ext.admin_permissions = json.loads(chat_available.permissions)
+                        chat_ext = ChatExt(chat, self.get_dialog_name(self.title, chat=chat, user_id=user.user_id), json.loads(chat_available.permissions))
                         chats_available[chat.chat_id] = chat_ext
                         self.lgz.debug('chat => chat_id=%(id)s added into list available chats from cache' % {'id': chat.chat_id})
         else:
