@@ -271,7 +271,7 @@ class TamTamBotDj(TamTamBot):
         # type: (int) -> timedelta or str
         tb = now()
 
-        all_bot_relation = self.get_all_chats_with_bot_admin()
+        all_bot_relation = self.get_all_chats_with_bot_admin(True)
         all_chats_members = all_bot_relation['ChatsMembers']
         all_members = all_bot_relation['Members']
         all_chats = all_bot_relation['Chats']
@@ -282,7 +282,7 @@ class TamTamBotDj(TamTamBot):
         if user_id:
             if user_id not in proc_user_list:
                 return _('Current user (%s) not found.') % user_id
-            api_user = proc_user_list[user_id]
+            api_user = all_members[user_id]
             TtbUser.update_or_create_by_tt_user(api_user)
             qs_db_user = TtbUser.objects.filter(user_id=user_id)
         else:
@@ -290,7 +290,8 @@ class TamTamBotDj(TamTamBot):
             proc_user_list = []
             c_u = 0
             for api_user in all_members.values():
-                if isinstance(api_user, ChatMember): pass
+                if isinstance(api_user, ChatMember):
+                    pass
                 c_u += 1
                 if api_user.is_bot:
                     api_user.disable = True
@@ -306,39 +307,41 @@ class TamTamBotDj(TamTamBot):
             duc = TtbUser.objects.filter(enabled=True).exclude(user_id__in=proc_user_list).update(enabled=False, updated=now())
             self.lgz.debug(f'Other users disabled: {duc}')
 
-            dcc = TtbDjSubscriber.objects.filter(enabled=True).exclude(chat_id__in=proc_chat_list).update(enabled=False, updated=now())
-            self.lgz.debug(f'Other chats disabled: {dcc}')
-
             qs_db_user = TtbUser.objects.filter(enabled=True)
 
         cnt_u = len(qs_db_user)
-
-        # Удаление строк кэша по неактивным подписчикам и пользователям
-        if user_id:
-            TtbDjChatAvailable.objects.filter(user__user_id=user_id, subscriber__enabled=False).delete()
-        else:
-            TtbDjChatAvailable.objects.filter(subscriber__enabled=False).delete()
-            TtbDjChatAvailable.objects.filter(user__enabled=False).delete()
 
         c_u = 0
         for db_user in qs_db_user:
             c_u += 1
             self.lgz.debug(f'+++++++++++++++> ({c_u} of {len(qs_db_user)}) - {db_user}')
-            chats = all_chats_members.get(db_user.user_id)
+            chat_ext_dict = all_chats_members.get(db_user.user_id)
             api_user = all_members.get(db_user.user_id)
-            if chats and api_user:
-                cnt_c = len(chats)
+            if chat_ext_dict and api_user:
+                cnt_c = len(chat_ext_dict)
                 c_c = 0
-                for chat in chats.values():
+                for chat_ext in chat_ext_dict.values():
                     c_c += 1
                     self.lgz.debug('Executing %.4f%% (user %d of %d) -> %.4f%% (chat %d of %d)' % (c_u / cnt_u * 100, c_u, cnt_u, c_c / cnt_c * 100, c_c, cnt_c))
-                    self.change_chat_available(chat, db_user, api_user)
-                self.lgz.debug(f"delete other records if exists for user_id={db_user.user_id}")
-                TtbDjChatAvailable.objects.filter(user=db_user).exclude(subscriber__chat_id__in=chats.keys()).delete()
-            elif not chats:
+                    self.change_chat_available(chat_ext, db_user, api_user)
+                    if not self.chat_is_allowed(chat_ext, db_user.user_id) and chat_ext.chat_id in proc_chat_list:
+                        proc_chat_list.remove(chat_ext.chat_id)
+            elif not chat_ext_dict:
                 self.lgz.debug(f"do not available chats for user_id={db_user.user_id}")
                 TtbDjChatAvailable.objects.filter(user=db_user).delete()
                 TtbUser.objects.filter(enabled=True, user_id=db_user.user_id).update(enabled=False, updated=now())
+
+        # Удаление строк кэша по неактивным подписчикам и пользователям
+        if user_id:
+            TtbDjChatAvailable.objects.filter(user__user_id=user_id).exclude(subscriber__chat_id__in=proc_chat_list).delete()
+            TtbDjChatAvailable.objects.filter(user__user_id=user_id, subscriber__enabled=False).delete()
+        else:
+            dcc = TtbDjSubscriber.objects.filter(enabled=True).exclude(chat_id__in=proc_chat_list).update(enabled=False, updated=now())
+            self.lgz.debug(f'Other chats disabled: {dcc}')
+
+            TtbDjChatAvailable.objects.filter(subscriber__enabled=False).delete()
+            TtbDjChatAvailable.objects.filter(user__enabled=False).delete()
+
         e_t = now() - tb
         self.lgz.debug(f'100% executed in {e_t}')
         return e_t
