@@ -29,6 +29,20 @@ class TtbAbstractEn(TtbAbstract):
     class Meta:
         abstract = True
 
+    def disable(self, remark=None):
+        self.enabled = False
+        self.updated = now()
+        if remark is not None and hasattr(self, 'remark'):
+            self.remark = f'{self.updated}: {remark}'
+        self.save()
+
+    def enable(self, remark=None):
+        self.enabled = True
+        self.updated = now()
+        if remark is not None and hasattr(self, 'remark'):
+            self.remark = f'{self.updated}: {remark}'
+        self.save()
+
     @classmethod
     def get_property_str(cls, property_set, p_type, code, def_val=None):
         # type: (QuerySet, str, str, str) -> str
@@ -51,6 +65,13 @@ class TtbAbstractEn(TtbAbstract):
         if value is not None:
             db_prop, created = cls.objects.update_or_create(p_type=p_type, code=code, value=value)
             property_set.add(db_prop)
+
+
+class TtbAbstractEnRem(TtbAbstractEn):
+    remark = models.TextField(verbose_name='remark', null=True, blank=True)
+
+    class Meta:
+        abstract = True
 
 
 class TtbDjSubscriber(TtbAbstractEn):
