@@ -74,6 +74,13 @@ class TtbAbstractEnRem(TtbAbstractEn):
         abstract = True
 
 
+class TtbAbstractEnRemComment(TtbAbstractEnRem):
+    comment = models.TextField(verbose_name='comment', null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+
 class TtbDjSubscriber(TtbAbstractEn):
     chat_id = models.BigIntegerField(unique=True, verbose_name='chat id')
     chat_name = models.TextField(unique=False, verbose_name='chat name')
