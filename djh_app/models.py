@@ -88,6 +88,9 @@ class TtbDjSubscriber(TtbAbstractEn):
     participants_count = models.BigIntegerField(unique=False, default=0, verbose_name='participants_count')
     language = models.CharField(max_length=20, unique=False, null=True, verbose_name='language')
 
+    def __str__(self):
+        return f'{self.chat_name}{f" [{self.language}]" if self.language else ""} [{self.participants_count}] |{self.chat_id} / {self.pk}|'
+
 
 class TtbUser(TtbAbstractEn):
     user_id = models.BigIntegerField(unique=True, verbose_name='user id')
@@ -98,6 +101,10 @@ class TtbUser(TtbAbstractEn):
     full_avatar_url = models.TextField(unique=False, null=True, blank=True, verbose_name='full avatar url')
     is_bot = models.NullBooleanField(default=None, null=True, verbose_name='is bot')
     subscriber = models.ManyToManyField(TtbDjSubscriber, verbose_name='subscriber')
+
+    def __str__(self):
+        return f'{self.name}{f" (@{self.username})" if self.username else ""}{f" [{self.language}]" if self.language else ""}' \
+               f'{f" [is bot]" if self.is_bot else ""} |{self.user_id} / {self.pk}|'
 
     @staticmethod
     def need_disable_user_by_last_activity_days(user, days=120):
