@@ -62,7 +62,7 @@ class TamTamBotDj(TamTamBot):
             b_obj = self.serialize_update(update)
             ttb_user, created = TtbUser.update_or_create_by_update(UpdateCmn(update, self))
             if isinstance(ttb_user, TtbUser):
-                TtbPrevStep.objects.update_or_create(user=ttb_user, index=index, defaults={'update': b_obj, 'updated': now()})
+                TtbPrevStep.objects.update_or_create(index=index, defaults={'user': ttb_user, 'update': b_obj, 'updated': now()})
 
     def prev_step_exists(self, index):
         # type: (str) -> bool
