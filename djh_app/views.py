@@ -20,6 +20,7 @@ if sys.argv and (sys.argv[1] == 'runserver' or sys.argv[0].endswith('gunicorn'))
     tt_bot.polling_sleep_time = 0
     if get_environ_bool('TT_BOT_POLLING_MODE', False):
         t = Thread(target=tt_bot.polling, args=())
+        t.name = f'pooling-main-thr'
         t.setDaemon(True)
         t.start()
 
