@@ -88,6 +88,9 @@ class TtbDjSubscriber(TtbAbstractEn):
     participants_count = models.BigIntegerField(unique=False, default=0, verbose_name='participants_count')
     language = models.CharField(max_length=20, unique=False, null=True, verbose_name='language')
 
+    class Meta:
+        ordering = ('chat_type', 'chat_name')
+
     def __str__(self):
         return f'{self.chat_name}{f" [{self.language}]" if self.language else ""} [{self.participants_count}] |{self.chat_id} / {self.pk}|'
 
@@ -101,6 +104,9 @@ class TtbUser(TtbAbstractEn):
     full_avatar_url = models.TextField(unique=False, null=True, blank=True, verbose_name='full avatar url')
     is_bot = models.BooleanField(default=None, null=True, verbose_name='is bot')
     subscriber = models.ManyToManyField(TtbDjSubscriber, verbose_name='subscriber')
+
+    class Meta:
+        ordering = ('name', 'username')
 
     def __str__(self):
         return f'{self.name}{f" (@{self.username})" if self.username else ""}{f" [{self.language}]" if self.language else ""}' \
