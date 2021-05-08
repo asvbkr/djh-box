@@ -6,7 +6,7 @@ from django.utils.timezone import now
 
 from TamTamBot import UpdateCmn, ChatExt, CallbackButtonCmd
 from TamTamBot.TamTamBot import TamTamBot
-from TamTamBot.utils.lng import get_text as _
+from ttgb_cmn.lng import get_text as _
 from djh_app.models import TtbUser, TtbPrevStep, TtbDjSubscriber, TtbDjChatAvailable, TtbDjLimitedButtons
 from openapi_client import Update, User, Chat, SimpleQueryResult, Intent, Button, ChatType, NewMessageBody, NewMessageLink, SendMessageResult, BotStartedUpdate, BotAddedToChatUpdate, \
     BotRemovedFromChatUpdate, MessageCreatedUpdate, MessageCallbackUpdate, UserAddedToChatUpdate, UserRemovedFromChatUpdate, ChatTitleChangedUpdate, MessageChatCreatedUpdate, ChatMember

@@ -2,7 +2,7 @@
 import os
 
 from TamTamBot import CallbackButtonCmd, UpdateCmn, ChatExt
-from TamTamBot.utils.lng import get_text as _
+from ttgb_cmn.lng import get_text as _
 from TamTamBotDj.TamTamBotDj import TamTamBotDj
 from openapi_client import BotCommand, Intent, ChatType, ChatAdminPermission
 

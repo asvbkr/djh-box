@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from TamTamBot import TamTamBot
-from TamTamBot.utils.utils import get_environ_bool
+from ttgb_cmn.cmn import Utils
 from TtBot.TtBot import TtBot
 from openapi_client import UserWithPhoto
 
@@ -18,7 +18,7 @@ tt_bot = None
 if sys.argv and (sys.argv[1] == 'runserver' or sys.argv[0].endswith('gunicorn')):
     tt_bot = TtBot()
     tt_bot.polling_sleep_time = 0
-    if get_environ_bool('TT_BOT_POLLING_MODE', False):
+    if Utils.get_environ_bool('TT_BOT_POLLING_MODE', False):
         t = Thread(target=tt_bot.polling, args=())
         t.name = f'pooling-main-thr'
         t.setDaemon(True)

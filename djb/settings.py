@@ -13,9 +13,9 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 import django_heroku
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-from TamTamBot.utils.utils import get_environ_bool
+from ttgb_cmn.cmn import Utils
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -25,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "CHANGE_ME!!!! (P.S. the SECRET_KEY environment variable will be used, if set, instead)."
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_environ_bool('DJANGO_DEBUG_MODE', False)
+DEBUG = Utils.get_environ_bool('DJANGO_DEBUG_MODE', False)
 
 ALLOWED_HOSTS = ['*']
 
@@ -120,6 +120,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = "/static/"
 
 django_heroku.settings(locals())
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'TtBot', 'locale'),

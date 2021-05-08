@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 
 from TamTamBot import UpdateCmn
-from TamTamBot.utils.utils import str_to_int, datetime_from_unix_time
+from ttgb_cmn.cmn import Utils
 from openapi_client import User, ChatType
 
 
@@ -56,7 +56,7 @@ class TtbAbstractEn(TtbAbstract):
     def get_property_int(cls, property_set, p_type, code, def_val=None):
         # type: (QuerySet, str, str, int) -> int
         res_str = cls.get_property_str(property_set, p_type, code)
-        return str_to_int(res_str, def_val)
+        return Utils.str_to_int(res_str, def_val)
 
     @classmethod
     def set_property(cls, property_set, p_type, code, value):
@@ -119,7 +119,7 @@ class TtbUser(TtbAbstractEn):
         nt = now()
         ut = user.last_activity_time
         if ut:
-            ut = datetime_from_unix_time(ut).astimezone()
+            ut = Utils.datetime_from_unix_time(ut).astimezone()
             if ((nt - ut).total_seconds() > 60 * 60 * 24 * days) or user.name == 'DELETED USER':
                 disable_user = True
         else:
