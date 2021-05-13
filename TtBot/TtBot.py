@@ -17,7 +17,7 @@ class TtBot(TamTamBotDj):
     @property
     def description(self):
         # type: () -> str
-        return 'Этот и не бот, в общем-то, а заготовка для него.\n\n' \
+        return 'Это и не бот, в общем-то, а заготовка для него.\n\n' \
                'This is not a bot, in general, but a blank for him.'
 
     def get_commands(self):
