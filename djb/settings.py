@@ -119,7 +119,7 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = "/static/"
 
-django_on_heroku.settings(locals())
+django_on_heroku.settings(locals(), db_ssl_required=os.environ.get('DATABASE_SSL', 'True').lower() != 'false')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
